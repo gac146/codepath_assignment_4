@@ -46,10 +46,23 @@
         <?php
           $created_at = strtotime($message['created_at']);
           
-          // Oooops.
-          // My finger accidentally hit the delete-key.
-          // Sorry, APEX!!!
-          
+          //Getting values to populate 
+          $sender_id = $message['sender_id'];
+          $sender_result = find_agent_by_id($sender_id);
+          $sender = db_fetch_assoc($sender_result);
+
+          //decrypting messsages for current_user
+          if($current_user['id'] == $agent['id']) {
+            $message_text = pkey_decrypt($message['cipher_text'], $current_user['private_key']);
+          }
+          else {
+            $message_text = $message['cipher_text'];
+          }
+
+          //checking validity of the signature
+          $validity = verify_signature($message['cipher_text'], $message['signature'], $sender['public_key']);
+          $validity_text = $validity ? 'Valid' : 'Not Valid';
+
         ?>
         <tr>
           <td><?php echo h(strftime('%b %d, %Y at %H:%M', $created_at)); ?></td>
